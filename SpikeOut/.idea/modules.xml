@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Blockout.iml" filepath="$PROJECT_DIR$/Blockout.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SpikeOut.iml" filepath="$PROJECT_DIR$/SpikeOut.iml" />
+      <module fileurl="file://$PROJECT_DIR$/SpikeOut/SpikeOut-SpikeOut.iml" filepath="$PROJECT_DIR$/SpikeOut/SpikeOut-SpikeOut.iml" />
+    </modules>
+  </component>
+</project>
+

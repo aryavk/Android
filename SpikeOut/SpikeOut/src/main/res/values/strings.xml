@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">SpikeOut</string>
+    <string name="start_text">Start!</string>
+    <string name="clear_score_text">Clear Score</string>
+    <string name="select_avatar_text">Select Avatar</string>
+    <string name="action_settings">Settings</string>
+
+</resources>
