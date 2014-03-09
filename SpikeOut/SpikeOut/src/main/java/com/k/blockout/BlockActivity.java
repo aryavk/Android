@@ -31,6 +31,8 @@ public class BlockActivity extends ActionBarActivity implements GameListener
     private final String HIGH_SCORE_KEY = "score";
 
     private View dialogView;
+    private MainGamePanel panel = null;
+    private Bitmap selectedAvatar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -116,7 +118,8 @@ public class BlockActivity extends ActionBarActivity implements GameListener
             @Override
             public void onClick(View view)
             {
-                startGameAvatar(avatar1Bitmap);
+                selectedAvatar = avatar1Bitmap;
+                startGameAvatar(selectedAvatar);
             }
         });
 
@@ -125,7 +128,8 @@ public class BlockActivity extends ActionBarActivity implements GameListener
             @Override
             public void onClick(View view)
             {
-                startGameAvatar(avatar2Bitmap);
+                selectedAvatar = avatar2Bitmap;
+                startGameAvatar(selectedAvatar);
             }
         });
     }
@@ -137,17 +141,17 @@ public class BlockActivity extends ActionBarActivity implements GameListener
         return prefs.getString(HIGH_SCORE_KEY, "0");
     }
 
-    private void saveScore(String score, boolean override)
+    private void saveScore(int score, boolean override)
     {
         String currentScore = readScore();
 
         // Only save score if its a new score
-        if (override || (Integer.valueOf(score) > Integer.valueOf(currentScore)))
+        if (override || (score > Integer.valueOf(currentScore)))
         {
             SharedPreferences prefs = this.getSharedPreferences(HIGH_SCORE_FILENAME, 0);
             SharedPreferences.Editor editor = prefs.edit();
 
-            editor.putString(HIGH_SCORE_KEY, score);
+            editor.putString(HIGH_SCORE_KEY, String.valueOf(score));
 
             editor.commit();
         }
@@ -155,10 +159,8 @@ public class BlockActivity extends ActionBarActivity implements GameListener
         showScore();
     }
 
-    MainGamePanel panel;
-
     @Override
-    public void onLose(final String score)
+    public void onLose(final int score)
     {
         runOnUiThread(new Runnable()
         {
@@ -180,43 +182,61 @@ public class BlockActivity extends ActionBarActivity implements GameListener
     }
 
     @Override
-    public void onWin(final String score)
+    public void onWin(final int newLevel, final int score)
     {
         runOnUiThread(new Runnable()
         {
             @Override
             public void run()
             {
-                saveScore(score, false);
-                alertDialog.setTitle("Winner");
+                if (newLevel <= MaxLevel)
+                {
+                    panel = new MainGamePanel(BlockActivity.this, selectedAvatar, score, newLevel);
+                    setContentView(panel);
+                }
+                else
+                {
+                    saveScore(score, false);
+                    alertDialog.setTitle("Winner");
 
-                final Bitmap medal = BitmapFactory.decodeResource(getResources(), R.drawable.medal);
-                TextView text = (TextView) dialogView.findViewById(R.id.dialog_text);
-                text.setText("You Win!\nScore: " + score);
-                ImageView img = (ImageView) dialogView.findViewById(R.id.dialog_image);
-                img.setImageBitmap(medal);
+                    final Bitmap medal = BitmapFactory.decodeResource(getResources(), R.drawable.medal);
+                    TextView text = (TextView) dialogView.findViewById(R.id.dialog_text);
+                    text.setText("You Win!\nScore: " + score);
+                    ImageView img = (ImageView) dialogView.findViewById(R.id.dialog_image);
+                    img.setImageBitmap(medal);
 
-                alertDialog.show();
+                    alertDialog.show();
+                }
             }
         });
     }
 
-    @Override
+    /*@Override
     public void onBackPressed()
     {
         super.onBackPressed();
         panel.getThread().setRunning(false);
+    }*/
+
+    @Override
+    protected void onPause()
+    {
+        super.onPause();
+        if (panel != null)
+        {
+            panel.getThread().setRunning(false);
+        }
     }
 
     public void startGameAvatar(Bitmap bmp)
     {
-        panel = new MainGamePanel(this, bmp);
+        panel = new MainGamePanel(this, bmp, 0, 1);
         setContentView(panel);
     }
 
     public void clearScore(@SuppressWarnings("unused")View view)
     {
-        saveScore("0", true);
+        saveScore(0, true);
     }
 
     @Override
@@ -229,8 +249,11 @@ public class BlockActivity extends ActionBarActivity implements GameListener
     @Override
     protected void onStop()
     {
-        Log.d(TAG, "Stopping...");
         super.onStop();
+        if (panel != null)
+        {
+            panel.getThread().setRunning(false);
+        }
     }
 
     @Override

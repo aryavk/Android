@@ -48,7 +48,8 @@ public class MainThread extends Thread
     private final SurfaceHolder surfaceHolder;
     private MainGamePanel gamePanel;
 
-    public MainThread(SurfaceHolder surfaceHolder, MainGamePanel gamePanel) {
+    public MainThread(SurfaceHolder surfaceHolder, MainGamePanel gamePanel)
+    {
         super();
         this.surfaceHolder = surfaceHolder;
         this.gamePanel = gamePanel;

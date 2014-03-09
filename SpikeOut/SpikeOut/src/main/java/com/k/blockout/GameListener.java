@@ -2,6 +2,8 @@ package com.k.blockout;
 
 public interface GameListener
 {
-    public void onLose(final String score);
-    public void onWin(final String score);
+    int MaxLevel = 7;
+
+    public void onLose(final int score);
+    public void onWin(final int level, final int score);
 }
