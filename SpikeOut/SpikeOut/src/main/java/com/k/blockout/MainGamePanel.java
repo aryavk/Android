@@ -18,6 +18,8 @@ import com.k.blockout.graphics.Opponent;
 import com.k.blockout.graphics.Player;
 import com.k.blockout.graphics.Volleyball;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
@@ -25,16 +27,10 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     private MainThread thread;
     private Volleyball playerVball;
     private Player player;
-    private Opponent opponent1;
-    private Opponent opponent2;
-    private Opponent opponent3;
-
-    private Volleyball opponentVball1;
-    private Volleyball opponentVball2;
-    private Volleyball opponentVball3;
-
     private int playerSpeed = 15;
     private int opponentSpeed = 15;
+
+    private List<Opponent> opponents;
 
     private final static int maxSpeed = 50;
 
@@ -50,6 +46,16 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         this.level = level;
         this.score = score;
 
+        Opponent opponent1;
+        Opponent opponent2;
+        Opponent opponent3;
+        Opponent opponent4;
+
+        Volleyball opponentVball1;
+        Volleyball opponentVball2;
+        Volleyball opponentVball3;
+        Volleyball opponentVball4;
+
         opponentSpeed = (opponentSpeed * level / 2);
 
         // adding the callback (this) to the surface holder to intercept events
@@ -61,25 +67,47 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         Bitmap opponent1Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent1);
         Bitmap opponent2Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent2);
         Bitmap opponent3Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent3);
+        Bitmap opponent4Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent4);
 
         // Create the players, opponents and balls.
         player = new Player(playerAvatar, 0, 0, playerSpeed);
         opponent1 = new Opponent(opponent1Bitmap, 0, 0, opponentSpeed);
         opponent2 = new Opponent(opponent2Bitmap, 0, 0, opponentSpeed);
         opponent3 = new Opponent(opponent3Bitmap, 0, 0, opponentSpeed);
+        opponent4 = new Opponent(opponent4Bitmap, 0, 0, opponentSpeed);
 
         playerVball = new Volleyball(volleyballBitmap, 0, 0, playerSpeed, Direction.UP, player);
 
         opponentVball1 = new Volleyball(volleyballBitmap, 0, 0, opponentSpeed, Direction.DOWN, opponent1);
         opponentVball2 = new Volleyball(volleyballBitmap, 0, 0, opponentSpeed, Direction.DOWN, opponent2);
         opponentVball3 = new Volleyball(volleyballBitmap, 0, 0, opponentSpeed, Direction.DOWN, opponent3);
+        opponentVball4 = new Volleyball(volleyballBitmap, 0, 0, opponentSpeed, Direction.DOWN, opponent3);
 
         // Assign the opponent ball to each opponent
         opponent1.setVolleyball(opponentVball1);
         opponent2.setVolleyball(opponentVball2);
         opponent3.setVolleyball(opponentVball3);
+        opponent4.setVolleyball(opponentVball4);
 
         thread = new MainThread(getHolder(), this);
+
+        opponents = new ArrayList<Opponent>();
+        opponents.add(opponent1);
+        opponents.add(opponent2);
+
+
+        if (level < 3)
+        {
+            // ignore
+        }
+        else if (level < 5)
+        {
+            opponents.add(opponent3);
+        }
+        else
+        {
+            opponents.add(opponent4);
+        }
 
         // Initialise the paint settings for the level starting text displaying time and level
         paint.setTextSize(120);
@@ -127,21 +155,16 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         }.start();
 
         player.setX(getWidth() / 2);
-        player.setY(getHeight() - opponent1.getHeight() / 2);
+        player.setY(getHeight() - player.getHeight() / 2);
 
-        randomiseOpponentX(opponent1);
-        randomiseOpponentX(opponent2);
-        randomiseOpponentX(opponent3);
-
-        opponent1.setY(opponent1.getHeight() / 2);
-        opponent2.setY(opponent1.getHeight() + (opponent2.getHeight() / 2));
-        opponent3.setY(opponent1.getHeight() + opponent2.getHeight() + (opponent3.getHeight() / 2));
+        for (Opponent opponent : opponents)
+        {
+            randomiseOpponentX(opponent);
+            opponent.setY((opponents.indexOf(opponent) * opponent.getHeight()) + opponent.getHeight() / 2);
+            opponent.reinitialise();
+        }
 
         playerVball.reinitialise();
-
-        opponent1.reinitialise();
-        opponent2.reinitialise();
-        opponent3.reinitialise();
 
         thread.setRunning(true);
         thread.start();
@@ -283,19 +306,21 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
     private void checkCollisions()
     {
-        checkPlayerCollision(opponentVball1);
-        checkPlayerCollision(opponentVball2);
-        checkPlayerCollision(opponentVball3);
+        boolean opponentsLeft = false;
 
-        checkBallCollisions(opponentVball1);
-        checkBallCollisions(opponentVball2);
-        checkBallCollisions(opponentVball3);
+        for (Opponent opponent : opponents)
+        {
+            checkPlayerCollision(opponent.getVolleyball());
 
-        checkOpponentCollisions(opponent1);
-        checkOpponentCollisions(opponent2);
-        checkOpponentCollisions(opponent3);
+            checkBallCollisions(opponent.getVolleyball());
 
-        if (!opponent1.isVisible() && !opponent2.isVisible() && !opponent3.isVisible())
+            checkOpponentCollisions(opponent);
+
+            if (opponent.isVisible())
+                opponentsLeft = true;
+        }
+
+        if (!opponentsLeft)
         {
             win();
         }
@@ -368,9 +393,10 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
         checkCollisions();
 
-        randomiseOpponent(opponent1, canvas);
-        randomiseOpponent(opponent2, canvas);
-        randomiseOpponent(opponent3, canvas);
+        for (Opponent opponent : opponents)
+        {
+            randomiseOpponent(opponent, canvas);
+        }
 
         playerVball.setSpeed(playerSpeed);
         player.setSpeed(playerSpeed);
