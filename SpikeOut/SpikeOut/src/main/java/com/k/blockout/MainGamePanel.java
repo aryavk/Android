@@ -6,12 +6,14 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.os.CountDownTimer;
+import android.support.v4.view.MotionEventCompat;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.ViewConfiguration;
 
+import com.k.blockout.graphics.Button;
 import com.k.blockout.graphics.CollisionDetector;
 import com.k.blockout.graphics.Direction;
 import com.k.blockout.graphics.Opponent;
@@ -24,20 +26,41 @@ import java.util.Random;
 
 public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 {
+    // This is the main game loop thread.
     private MainThread thread;
+
+    // These are the member variables for the player related graphics
     private Volleyball playerVball;
     private Player player;
+
+    // The initial speed variables. opponent speed gets modified on surface creation
     private int playerSpeed = 15;
     private int opponentSpeed = 15;
+    private final static int maxSpeed = 50;
 
+    // This is the list of opponents on screen you must beat
     private List<Opponent> opponents;
 
-    private final static int maxSpeed = 50;
+    // This is the control buttons
+    private Button leftButton;
+    private Button rightButton;
+    private Button shootButton;
 
     private int score;
     private int level;
 
-    private Paint paint = new Paint();
+    private int gameHeight;
+
+    private Bitmap courtBitmap;
+
+    private Rect courtPane;
+    private Rect courtInitialPane;
+    private Rect buttonPane;
+    private Paint buttonPanePaint = new Paint();
+    private Paint levelTextPaint = new Paint();
+
+    // TODO maybe i dont need this, added in for the balls able to keep going, but it shouldnt occur anymore, was wrong code
+    private final Object mutex = new Object();
 
     public MainGamePanel(Context context, Bitmap playerAvatar, int score, int level)
     {
@@ -56,7 +79,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         Volleyball opponentVball3;
         Volleyball opponentVball4;
 
-        opponentSpeed = (opponentSpeed * level / 2);
+        opponentSpeed = opponentSpeed + ((level * 3) /2) + (level / 2);
 
         // adding the callback (this) to the surface holder to intercept events
         if (getHolder() != null)
@@ -68,6 +91,12 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         Bitmap opponent2Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent2);
         Bitmap opponent3Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent3);
         Bitmap opponent4Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent4);
+
+        Bitmap leftButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.back2);
+        Bitmap rightButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.forward2);
+        Bitmap shootButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.spike);
+
+        courtBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.court2);
 
         // Create the players, opponents and balls.
         player = new Player(playerAvatar, 0, 0, playerSpeed);
@@ -89,30 +118,38 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         opponent3.setVolleyball(opponentVball3);
         opponent4.setVolleyball(opponentVball4);
 
+        // Create the action buttons for use in the button pane
+        leftButton = new Button(leftButtonBitmap, 0, 0);
+        rightButton = new Button(rightButtonBitmap, 0, 0);
+        shootButton = new Button(shootButtonBitmap, 0, 0);
+
         thread = new MainThread(getHolder(), this);
 
         opponents = new ArrayList<Opponent>();
-        opponents.add(opponent1);
-        opponents.add(opponent2);
 
-
-        if (level < 3)
+        for (int i = 1; i <= level; i++)
         {
-            // ignore
-        }
-        else if (level < 5)
-        {
-            opponents.add(opponent3);
-        }
-        else
-        {
-            opponents.add(opponent4);
+            if (i == 1)
+            {
+                opponents.add(opponent1);
+                opponents.add(opponent2);
+            }
+            else if (i == 3)
+            {
+                opponents.add(opponent3);
+            }
+            else if (i == 5)
+            {
+                opponents.add(opponent4);
+            }
         }
 
         // Initialise the paint settings for the level starting text displaying time and level
-        paint.setTextSize(120);
-        paint.setTextAlign(Paint.Align.CENTER);
-        paint.setColor(Color.CYAN);
+        levelTextPaint.setTextSize(120);
+        levelTextPaint.setTextAlign(Paint.Align.CENTER);
+        levelTextPaint.setColor(Color.CYAN);
+
+        buttonPanePaint.setColor(Color.BLUE);
 
         // make the GamePanel focusable so it can handle events
         setFocusable(true);
@@ -133,16 +170,26 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     private String levelText = "";
     private String timeText = "";
 
+    // Lets initialise all the on screen elements
     private void reinitialise()
     {
+        // Initialise the waiting text
         levelText = "Level " + level;
 
+        // This is the countdown timer at the start of each level
         new CountDownTimer(3000,1000)
         {
             @Override
             public void onTick(long timeLeft)
             {
-                timeText = "Time Left: " + String.valueOf(timeLeft / 1000);
+                if (timeLeft > 999)
+                {
+                    timeText = "Time Left: " + String.valueOf(timeLeft / 1000);
+                }
+                else
+                {
+                    timeText = "START";
+                }
                 invalidate();
             }
 
@@ -154,17 +201,38 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
             }
         }.start();
 
-        player.setX(getWidth() / 2);
-        player.setY(getHeight() - player.getHeight() / 2);
+        // Set the game height to most of the screen (add in a layer at the bottom for a button pane
+        int gameHeightToUse = (getHeight() - (shootButton.getHeight()));
+        setGameHeight(gameHeightToUse);
 
+        // Put the players avatar in the bottom of the game screen in the middle of the horizontal axis
+        player.setX(getWidth() / 2);
+        player.setY(getGameHeight() - player.getHeight() / 2);
+        playerVball.reinitialise();
+        playerVball.setGameHeight(getGameHeight());
+
+        // Initialise the location of the opponents and their volleyballs
         for (Opponent opponent : opponents)
         {
             randomiseOpponentX(opponent);
             opponent.setY((opponents.indexOf(opponent) * opponent.getHeight()) + opponent.getHeight() / 2);
             opponent.reinitialise();
+            opponent.getVolleyball().setGameHeight(getGameHeight());
         }
 
-        playerVball.reinitialise();
+        // Define the button pane and the buttons within it.
+        buttonPane = new Rect(0, getGameHeight(), getWidth(), getHeight());
+        courtPane = new Rect(0, 0, getWidth(), getGameHeight());
+        courtInitialPane = new Rect(0, 35, courtBitmap.getWidth(), courtBitmap.getHeight());
+
+        leftButton.setY(getHeight() - (leftButton.getHeight() / 2));
+        leftButton.setX((int) (getWidth() * 0.1));
+
+        rightButton.setY(getHeight() - (rightButton.getHeight() / 2));
+        rightButton.setX((int)(getWidth() * 0.35));
+
+        shootButton.setY(getHeight() - (shootButton.getHeight() / 2));
+        shootButton.setX((int)(getWidth() * 0.9));
 
         thread.setRunning(true);
         thread.start();
@@ -195,43 +263,127 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
     public boolean isGameStarted() { return gameStarted; }
 
-    // This is a variable to help determine double touch when wanting to shoot a ball
-    private long lastTouchTime = -1;
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event)
+    public int getGameHeight()
     {
-        float eventX = event.getX();
+        return gameHeight;
+    }
 
-        if (event.getAction() == MotionEvent.ACTION_DOWN)
+    public void setGameHeight(int gameHeight)
+    {
+        this.gameHeight = gameHeight;
+    }
+
+    private final int NoPointer = -1;
+
+    private int movePointer = NoPointer;
+    private int shootPointer = NoPointer;
+
+    private void handleActions(float eventX, float eventY, int pointer)
+    {
+        if (leftButton.eventInBounds(eventX, eventY))
         {
-            long thisTime = System.currentTimeMillis();
-
-            if (thisTime - lastTouchTime < ViewConfiguration.getDoubleTapTimeout())
+            if (!player.isMovingHorizontally())
             {
-                lastTouchTime = -1;
+                player.setMoveToX(0);
+                player.setMovingHorizontally(true);
+            }
 
+            /*if (movePointer == NoPointer)*/
+                movePointer = pointer;
+        }
+        else if (rightButton.eventInBounds(eventX, eventY))
+        {
+            if (!player.isMovingHorizontally())
+            {
+                player.setMoveToX(getWidth());
+                player.setMovingHorizontally(true);
+            }
+
+            /*if (movePointer == NoPointer)*/
+                movePointer = pointer;
+        }
+        else if (shootButton.eventInBounds(eventX, eventY))
+        {
+            synchronized (mutex)
+            {
                 if (!playerVball.isMovingVertically())
                     playerVball.setX(player.getX());
 
                 playerVball.setMovingVertically(isGameStarted());
-
+                shootPointer = pointer;
             }
-            else
+        }
+        else
+        {
+            // If you are not in the left or right movement squares, stop moving
+            if (pointer == movePointer)
             {
-                lastTouchTime = thisTime;
-                player.setMovingHorizontally(true);
-                player.setMoveToX(eventX);
+                player.setMovingHorizontally(false);
+                movePointer = NoPointer;
             }
+
+            if (pointer == shootPointer)
+                shootPointer = NoPointer;
         }
-        else if (event.getAction() == MotionEvent.ACTION_UP)
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event)
+    {
+        int action = MotionEventCompat.getActionMasked(event);
+        /*int pointer = MotionEventCompat.getActionIndex(event);*/
+        int pointerCount = event.getPointerCount();
+
+        for (int i = 0; i < pointerCount; i++)
         {
-            player.setMovingHorizontally(false);
-        }
-        else if (event.getAction() == MotionEvent.ACTION_MOVE)
-        {
-            player.setMovingHorizontally(true);
-            player.setMoveToX(eventX);
+            int pointer = event.getPointerId(i);
+            float pressure = event.getPressure(i);
+            float eventX = event.getX(i);
+            float eventY = event.getY(i);
+
+            // Pressure must be ok, not just a very slight hover touch.
+            if (pressure > 0.5)
+            {
+                if (action == MotionEvent.ACTION_DOWN)
+                {
+                    handleActions(eventX, eventY, pointer);
+                }
+                else if (action == MotionEvent.ACTION_UP)
+                {
+                    if (pointer == movePointer)
+                    {
+                        movePointer = NoPointer;
+                        player.setMovingHorizontally(false);
+                    }
+                    else if (pointer == shootPointer)
+                    {
+                        shootPointer = NoPointer;
+                    }
+                }
+                else if (action == MotionEvent.ACTION_POINTER_UP)
+                {
+                    if (pointer == movePointer)
+                    {
+                        movePointer = NoPointer;
+                        player.setMovingHorizontally(false);
+                    }
+                    else if (pointer == shootPointer)
+                    {
+                        shootPointer = NoPointer;
+                    }
+                }
+                else if(action == MotionEvent.ACTION_POINTER_DOWN)
+                {
+                    handleActions(eventX, eventY, pointer);
+                }
+                else if (action == MotionEvent.ACTION_MOVE)
+                {
+                    // In the move action, we need to define the pointer differently, as it always uses index 0
+                    // when doing MotionEventCompat.getActionIndex(event);. This is a workaround
+                    pointer = event.getPointerId(i);
+                    handleActions(eventX, eventY, pointer);
+                }
+            }
         }
 
         return true;
@@ -294,10 +446,11 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
     private void checkOpponentCollisions(Opponent opponent)
     {
-        // If balls collide then clear both balls
+        // If balls collides wih opponent, remove opponent and his ball (TODO keep the ball -> collision issues with just removing last line in block)
         if (CollisionDetector.collisionDetected(playerVball, opponent))
         {
             playerVball.setMovingVertically(false);
+            playerVball.reinitialise();
             addScore(5);
             opponent.setVisible(false);
             opponent.getVolleyball().setVisible(false);
@@ -308,16 +461,19 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     {
         boolean opponentsLeft = false;
 
-        for (Opponent opponent : opponents)
+        synchronized (mutex)
         {
-            checkPlayerCollision(opponent.getVolleyball());
+            for (Opponent opponent : opponents)
+            {
+                checkPlayerCollision(opponent.getVolleyball());
 
-            checkBallCollisions(opponent.getVolleyball());
+                checkBallCollisions(opponent.getVolleyball());
 
-            checkOpponentCollisions(opponent);
+                checkOpponentCollisions(opponent);
 
-            if (opponent.isVisible())
-                opponentsLeft = true;
+                if (opponent.isVisible())
+                    opponentsLeft = true;
+            }
         }
 
         if (!opponentsLeft)
@@ -330,7 +486,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     {
         if (!opponent.isMovingHorizontally())
         {
-            int newX = random.nextInt((getWidth() - 60) - 60) + 60;
+            int newX = random.nextInt((getWidth() - opponent.getWidth() / 2) - opponent.getWidth() / 2) + opponent.getWidth() / 2;
             opponent.setMoveToX(newX);
             opponent.setMovingHorizontally(true);
         }
@@ -383,12 +539,18 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     @Override
     protected void onDraw(Canvas canvas)
     {
-        canvas.drawColor(Color.BLACK);
+        canvas.drawColor(Color.LTGRAY);
         if (!isGameStarted())
         {
-            canvas.drawText(levelText, getWidth() / 2, (getHeight() / 2) - 120, paint);
-            canvas.drawText(timeText, getWidth() / 2, (getHeight() / 2) + 120, paint);
+            canvas.drawText(levelText, getWidth() / 2, (getHeight() / 2) - 120, levelTextPaint);
+            canvas.drawText(timeText, getWidth() / 2, (getHeight() / 2) + 120, levelTextPaint);
         }
+        canvas.drawRect(buttonPane, buttonPanePaint);
+        canvas.drawBitmap(courtBitmap, courtInitialPane, courtPane, null);
+
+        leftButton.draw(canvas);
+        rightButton.draw(canvas);
+        shootButton.draw(canvas);
         player.draw(canvas);
 
         checkCollisions();

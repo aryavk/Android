@@ -17,7 +17,6 @@ public class Volleyball implements GraphicInterface, Collidable
 
     private int x;   // the X coordinate
     private int y;   // the Y coordinate
-    private boolean touched; // if droid is touched/picked up
     private boolean movingVertically;
     private boolean movingHorizontally;
     private int speed;
@@ -30,6 +29,8 @@ public class Volleyball implements GraphicInterface, Collidable
 
     private int Width;
     private int Height;
+
+    private int gameHeight;
 
     public Volleyball(Bitmap bitmap, int x, int y, int speed, Direction direction, Person player)
     {
@@ -88,9 +89,7 @@ public class Volleyball implements GraphicInterface, Collidable
     public Bitmap getBitmap() {
         return bitmap;
     }
-    public void setBitmap(Bitmap bitmap) {
-        this.bitmap = bitmap;
-    }
+
     public int getX() {
         return x;
     }
@@ -108,6 +107,7 @@ public class Volleyball implements GraphicInterface, Collidable
     {
         return movingVertically;
     }
+    @SuppressWarnings("unused") // TODO maybe implement "curve" balls
     public boolean isMovingHorizontally()
     {
         return movingHorizontally;
@@ -135,16 +135,19 @@ public class Volleyball implements GraphicInterface, Collidable
         this.speed = speed;
     }
 
+    @SuppressWarnings("unused") // TODO maybe implement "curve" balls
     public void setMovingHorizontally(boolean moving)
     {
         this.movingHorizontally = moving;
     }
 
+    @SuppressWarnings("unused") // TODO maybe implement "curve" balls
     public float getMoveToX()
     {
         return moveToX;
     }
 
+    @SuppressWarnings("unused") // TODO maybe implement "curve" balls
     public void setMoveToX(float moveToX)
     {
         this.moveToX = moveToX;
@@ -155,19 +158,19 @@ public class Volleyball implements GraphicInterface, Collidable
         return Width;
     }
 
-    public void setWidth(int width)
-    {
-        Width = width;
-    }
-
     public int getHeight()
     {
         return Height;
     }
 
-    public void setHeight(int height)
+    public int getGameHeight()
     {
-        Height = height;
+        return gameHeight;
+    }
+
+    public void setGameHeight(int gameHeight)
+    {
+        this.gameHeight = gameHeight;
     }
 
     public void draw(Canvas canvas)
@@ -204,20 +207,20 @@ public class Volleyball implements GraphicInterface, Collidable
         if (direction.equals(Direction.UP))
         {
             if (isMovingVertically() && getY() > 0)
-                setY(getY() - speed);
+                setY(getY() - getSpeed());
             else
             {
-                setY(view.getHeight() - 60);
+                setY(getGameHeight() - getHeight() / 2);
                 setMovingVertically(false);
             }
         }
         else
         {
-            if (isMovingVertically() && getY() < view.getHeight())
-                setY(getY() + speed);
+            if (isMovingVertically() && getY() < getGameHeight())
+                setY(getY() + getSpeed());
             else
             {
-                setY(60);
+                setY(getHeight() / 2);
                 setMovingVertically(false);
             }
         }

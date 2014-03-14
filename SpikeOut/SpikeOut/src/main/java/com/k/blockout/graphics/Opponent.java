@@ -43,26 +43,18 @@ public class Opponent extends Person implements GraphicInterface
         return Width;
     }
 
-    public void setWidth(int width)
-    {
-        Width = width;
-    }
-
     public int getHeight()
     {
         return Height;
     }
 
-    public void setHeight(int height)
-    {
-        Height = height;
-    }
-
+    @SuppressWarnings("unused") // TODO maybe implement "attacking" players
     public boolean isMovingVertically()
     {
         return movingVertically;
     }
 
+    @SuppressWarnings("unused") // TODO maybe implement "attacking" players
     public void setMovingVertically(boolean movingVertically)
     {
         this.movingVertically = movingVertically;
