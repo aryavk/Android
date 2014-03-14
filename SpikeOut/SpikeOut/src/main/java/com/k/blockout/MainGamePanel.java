@@ -79,7 +79,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         Volleyball opponentVball3;
         Volleyball opponentVball4;
 
-        opponentSpeed = opponentSpeed + ((level * 3) /2) + (level / 2);
+        opponentSpeed = opponentSpeed + ((level * 3) /2) + (level);
 
         // adding the callback (this) to the surface holder to intercept events
         if (getHolder() != null)
@@ -94,7 +94,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
         Bitmap leftButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.back2);
         Bitmap rightButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.forward2);
-        Bitmap shootButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.spike);
+        Bitmap shootButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.spike2);
 
         courtBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.court2);
 
@@ -527,7 +527,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
     private void incrementSpeed()
     {
-        if (i % 100 == 0)
+        if (i % 50 == 0)
         {
             if (playerSpeed < maxSpeed)
                 playerSpeed++;
