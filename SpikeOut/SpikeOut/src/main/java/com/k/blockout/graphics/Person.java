@@ -12,6 +12,7 @@ public abstract class Person implements GraphicInterface
     private float moveToX;
     private int speed;
     private boolean movingHorizontally;
+    private Volleyball volleyball;
 
     public Bitmap getBitmap()
     {
@@ -109,6 +110,16 @@ public abstract class Person implements GraphicInterface
                 setMovingHorizontally(false);
             }
         }
+    }
+
+    public Volleyball getVolleyball()
+    {
+        return volleyball;
+    }
+
+    public void setVolleyball(Volleyball volleyball)
+    {
+        this.volleyball = volleyball;
     }
 
     public void draw(Canvas canvas)

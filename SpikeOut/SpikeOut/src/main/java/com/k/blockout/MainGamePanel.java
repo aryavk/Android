@@ -1,8 +1,6 @@
 package com.k.blockout;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -16,7 +14,9 @@ import android.view.SurfaceView;
 import com.k.blockout.graphics.Button;
 import com.k.blockout.graphics.CollisionDetector;
 import com.k.blockout.graphics.Direction;
+import com.k.blockout.graphics.GameResources;
 import com.k.blockout.graphics.Opponent;
+import com.k.blockout.graphics.Person;
 import com.k.blockout.graphics.Player;
 import com.k.blockout.graphics.Volleyball;
 
@@ -30,13 +30,10 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     private MainThread thread;
 
     // These are the member variables for the player related graphics
-    private Volleyball playerVball;
     private Player player;
 
-    // The initial speed variables. opponent speed gets modified on surface creation
-    private int playerSpeed = 15;
-    private int opponentSpeed = 15;
-    private final static int maxSpeed = 50;
+    private final static int maxPersonSpeed = 40;
+    private final static int maxBallSpeed = 80;
 
     // This is the list of opponents on screen you must beat
     private List<Opponent> opponents;
@@ -51,66 +48,61 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
     private int gameHeight;
 
-    private Bitmap courtBitmap;
+    private GameResources resources;
 
     private Rect courtPane;
     private Rect courtInitialPane;
     private Rect buttonPane;
     private Paint buttonPanePaint = new Paint();
     private Paint levelTextPaint = new Paint();
+    private Paint scoreTextPaint = new Paint();
+
+    private boolean gameStarted = false;
+    private String levelText = "";
+    private String timeText = "";
 
     // TODO maybe i dont need this, added in for the balls able to keep going, but it shouldnt occur anymore, was wrong code
     private final Object mutex = new Object();
 
-    public MainGamePanel(Context context, Bitmap playerAvatar, int score, int level)
+    public MainGamePanel(Context context, int score, int level, GameResources resources)
     {
         super(context);
+
+        int playerSpeed = 15;
+        int opponentSpeed = 15;
+        int opponentBallSpeed = 15;
+
+        this.resources = resources;
 
         this.level = level;
         this.score = score;
 
-        Opponent opponent1;
-        Opponent opponent2;
-        Opponent opponent3;
-        Opponent opponent4;
-
-        Volleyball opponentVball1;
-        Volleyball opponentVball2;
-        Volleyball opponentVball3;
-        Volleyball opponentVball4;
-
-        opponentSpeed = opponentSpeed + ((level * 3) /2) + (level);
+        opponentBallSpeed = opponentBallSpeed + (level);
 
         // adding the callback (this) to the surface holder to intercept events
         if (getHolder() != null)
             getHolder().addCallback(this);
 
-        // Get the bitmap resources from drawable-mdpi
-        Bitmap volleyballBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ball);
-        Bitmap opponent1Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent1);
-        Bitmap opponent2Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent2);
-        Bitmap opponent3Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent3);
-        Bitmap opponent4Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.opponent4);
-
-        Bitmap leftButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.back2);
-        Bitmap rightButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.forward2);
-        Bitmap shootButtonBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.spike2);
-
-        courtBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.court2);
-
         // Create the players, opponents and balls.
-        player = new Player(playerAvatar, 0, 0, playerSpeed);
-        opponent1 = new Opponent(opponent1Bitmap, 0, 0, opponentSpeed);
-        opponent2 = new Opponent(opponent2Bitmap, 0, 0, opponentSpeed);
-        opponent3 = new Opponent(opponent3Bitmap, 0, 0, opponentSpeed);
-        opponent4 = new Opponent(opponent4Bitmap, 0, 0, opponentSpeed);
+        player = new Player(resources.getPlayerAvatar(), 0, 0, playerSpeed);
+        Volleyball playerVball = new Volleyball(resources.getVolleyballBitmap(), 0, 0, playerSpeed, Direction.UP, player);
 
-        playerVball = new Volleyball(volleyballBitmap, 0, 0, playerSpeed, Direction.UP, player);
+        player.setVolleyball(playerVball);
 
-        opponentVball1 = new Volleyball(volleyballBitmap, 0, 0, opponentSpeed, Direction.DOWN, opponent1);
-        opponentVball2 = new Volleyball(volleyballBitmap, 0, 0, opponentSpeed, Direction.DOWN, opponent2);
-        opponentVball3 = new Volleyball(volleyballBitmap, 0, 0, opponentSpeed, Direction.DOWN, opponent3);
-        opponentVball4 = new Volleyball(volleyballBitmap, 0, 0, opponentSpeed, Direction.DOWN, opponent3);
+        Opponent opponent1 = new Opponent(resources.getOpponent1Bitmap(), 0, 0, opponentSpeed);
+        Opponent opponent2 = new Opponent(resources.getOpponent2Bitmap(), 0, 0, opponentSpeed);
+        Opponent opponent3 = new Opponent(resources.getOpponent3Bitmap(), 0, 0, opponentSpeed);
+        Opponent opponent4 = new Opponent(resources.getOpponent4Bitmap(), 0, 0, opponentSpeed);
+
+        Volleyball opponentVball1 = new Volleyball(resources.getVolleyballBitmap(), 0, 0, opponentSpeed, Direction.DOWN, opponent1);
+        Volleyball opponentVball2 = new Volleyball(resources.getVolleyballBitmap(), 0, 0, opponentSpeed, Direction.DOWN, opponent2);
+        Volleyball opponentVball3 = new Volleyball(resources.getVolleyballBitmap(), 0, 0, opponentSpeed, Direction.DOWN, opponent3);
+        Volleyball opponentVball4 = new Volleyball(resources.getVolleyballBitmap(), 0, 0, opponentSpeed, Direction.DOWN, opponent3);
+
+        opponentVball1.setSpeed(opponentBallSpeed);
+        opponentVball2.setSpeed(opponentBallSpeed);
+        opponentVball3.setSpeed(opponentBallSpeed);
+        opponentVball4.setSpeed(opponentBallSpeed);
 
         // Assign the opponent ball to each opponent
         opponent1.setVolleyball(opponentVball1);
@@ -119,9 +111,9 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         opponent4.setVolleyball(opponentVball4);
 
         // Create the action buttons for use in the button pane
-        leftButton = new Button(leftButtonBitmap, 0, 0);
-        rightButton = new Button(rightButtonBitmap, 0, 0);
-        shootButton = new Button(shootButtonBitmap, 0, 0);
+        leftButton = new Button(resources.getLeftButtonBitmap(), 0, 0);
+        rightButton = new Button(resources.getRightButtonBitmap(), 0, 0);
+        shootButton = new Button(resources.getShootButtonBitmap(), 0, 0);
 
         thread = new MainThread(getHolder(), this);
 
@@ -147,7 +139,12 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         // Initialise the paint settings for the level starting text displaying time and level
         levelTextPaint.setTextSize(120);
         levelTextPaint.setTextAlign(Paint.Align.CENTER);
-        levelTextPaint.setColor(Color.CYAN);
+        levelTextPaint.setColor(Color.YELLOW);
+
+        // Initialise the paint settings for the score text displaying the current score
+        scoreTextPaint.setTextSize(70);
+        scoreTextPaint.setTextAlign(Paint.Align.LEFT);
+        scoreTextPaint.setColor(Color.YELLOW);
 
         buttonPanePaint.setColor(Color.BLUE);
 
@@ -165,10 +162,6 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     {
         reinitialise();
     }
-
-    private boolean gameStarted = false;
-    private String levelText = "";
-    private String timeText = "";
 
     // Lets initialise all the on screen elements
     private void reinitialise()
@@ -208,8 +201,8 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         // Put the players avatar in the bottom of the game screen in the middle of the horizontal axis
         player.setX(getWidth() / 2);
         player.setY(getGameHeight() - player.getHeight() / 2);
-        playerVball.reinitialise();
-        playerVball.setGameHeight(getGameHeight());
+        player.getVolleyball().reinitialise();
+        player.getVolleyball().setGameHeight(getGameHeight());
 
         // Initialise the location of the opponents and their volleyballs
         for (Opponent opponent : opponents)
@@ -223,7 +216,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         // Define the button pane and the buttons within it.
         buttonPane = new Rect(0, getGameHeight(), getWidth(), getHeight());
         courtPane = new Rect(0, 0, getWidth(), getGameHeight());
-        courtInitialPane = new Rect(0, 35, courtBitmap.getWidth(), courtBitmap.getHeight());
+        courtInitialPane = new Rect(0, 0, resources.getCourtBitmap().getWidth(), resources.getCourtBitmap().getHeight());
 
         leftButton.setY(getHeight() - (leftButton.getHeight() / 2));
         leftButton.setX((int) (getWidth() * 0.1));
@@ -306,10 +299,13 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         {
             synchronized (mutex)
             {
-                if (!playerVball.isMovingVertically())
-                    playerVball.setX(player.getX());
-
-                playerVball.setMovingVertically(isGameStarted());
+                if (!player.getVolleyball().isMovingVertically())
+                {
+                    player.getVolleyball().setX(player.getX());
+                    player.getVolleyball().setMovingVertically(isGameStarted());
+                    if (isGameStarted())
+                        resources.getSoundPool().play(resources.getSounds()[1], 100, 100, 1, 0, 1);
+                }
                 shootPointer = pointer;
             }
         }
@@ -327,16 +323,16 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         }
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
         int action = MotionEventCompat.getActionMasked(event);
-        /*int pointer = MotionEventCompat.getActionIndex(event);*/
         int pointerCount = event.getPointerCount();
 
         for (int i = 0; i < pointerCount; i++)
         {
-            int pointer = event.getPointerId(i);
+            int pointer = MotionEventCompat.getPointerId(event, i);
             float pressure = event.getPressure(i);
             float eventX = event.getX(i);
             float eventY = event.getY(i);
@@ -383,6 +379,18 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
                     pointer = event.getPointerId(i);
                     handleActions(eventX, eventY, pointer);
                 }
+                else if (action == MotionEvent.ACTION_CANCEL)
+                {
+                    if (pointer == movePointer)
+                    {
+                        movePointer = NoPointer;
+                        player.setMovingHorizontally(false);
+                    }
+                    else if (pointer == shootPointer)
+                    {
+                        shootPointer = NoPointer;
+                    }
+                }
             }
         }
 
@@ -421,12 +429,12 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     private void checkBallCollisions(Volleyball opponentVball)
     {
         // If balls collide then clear both balls
-        if (CollisionDetector.collisionDetected(playerVball, opponentVball))
+        if (CollisionDetector.collisionDetected(player.getVolleyball(), opponentVball))
         {
-            playerVball.setMovingVertically(false);
+            player.getVolleyball().setMovingVertically(false);
             opponentVball.setMovingVertically(false);
 
-            playerVball.reinitialise();
+            player.getVolleyball().reinitialise();
             opponentVball.reinitialise();
         }
     }
@@ -435,6 +443,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     {
         if (CollisionDetector.collisionDetected(player, opponentVball))
         {
+            resources.getSoundPool().play(resources.getSounds()[0], 100, 100, 1, 0, 1);
             lose();
         }
     }
@@ -447,10 +456,10 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     private void checkOpponentCollisions(Opponent opponent)
     {
         // If balls collides wih opponent, remove opponent and his ball (TODO keep the ball -> collision issues with just removing last line in block)
-        if (CollisionDetector.collisionDetected(playerVball, opponent))
+        if (CollisionDetector.collisionDetected(player.getVolleyball(), opponent))
         {
-            playerVball.setMovingVertically(false);
-            playerVball.reinitialise();
+            player.getVolleyball().setMovingVertically(false);
+            player.getVolleyball().reinitialise();
             addScore(5);
             opponent.setVisible(false);
             opponent.getVolleyball().setVisible(false);
@@ -513,9 +522,6 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
                 opponent.getVolleyball().spinBall();
             }
 
-            opponent.getVolleyball().setSpeed(opponentSpeed);
-            opponent.setSpeed(opponentSpeed);
-
             if (opponent.isMovingHorizontally())
             {
                 opponent.moveHorizontally(this);
@@ -525,28 +531,41 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         }
     }
 
-    private void incrementSpeed()
+    private void incrementSpeed(Person person)
     {
-        if (i % 50 == 0)
+        if (i % 100 == 0)
         {
-            if (playerSpeed < maxSpeed)
-                playerSpeed++;
-            if (opponentSpeed < (maxSpeed * 2))
-                opponentSpeed++;
+            if (person.getVolleyball().getSpeed() < maxBallSpeed)
+                person.getVolleyball().setSpeed(person.getVolleyball().getSpeed() + 1);
+        }
+
+        if (i % 200 == 0)
+        {
+            if (person.getSpeed() < maxPersonSpeed)
+                person.setSpeed(person.getSpeed() + 1);
         }
     }
 
     @Override
     protected void onDraw(Canvas canvas)
     {
-        canvas.drawColor(Color.LTGRAY);
+        // Lets clear the canvas
+        canvas.drawColor(Color.BLACK);
+
+        // Now lets draw the button pane in the specified Rect at the bottom of the screen
+        canvas.drawRect(buttonPane, buttonPanePaint);
+
+        // Now draw the court in the main game area
+        canvas.drawBitmap(resources.getCourtBitmap(), courtInitialPane, courtPane, null);
+
+        // If its the start of the level, display the level/time text
         if (!isGameStarted())
         {
             canvas.drawText(levelText, getWidth() / 2, (getHeight() / 2) - 120, levelTextPaint);
             canvas.drawText(timeText, getWidth() / 2, (getHeight() / 2) + 120, levelTextPaint);
         }
-        canvas.drawRect(buttonPane, buttonPanePaint);
-        canvas.drawBitmap(courtBitmap, courtInitialPane, courtPane, null);
+
+        canvas.drawText("Score: " + score, getWidth() / 2, getGameHeight() + 70, scoreTextPaint);
 
         leftButton.draw(canvas);
         rightButton.draw(canvas);
@@ -555,30 +574,29 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
 
         checkCollisions();
 
-        for (Opponent opponent : opponents)
-        {
-            randomiseOpponent(opponent, canvas);
-        }
-
-        playerVball.setSpeed(playerSpeed);
-        player.setSpeed(playerSpeed);
 
         i++;
 
-        incrementSpeed();
+        for (Opponent opponent : opponents)
+        {
+            randomiseOpponent(opponent, canvas);
+            incrementSpeed(opponent);
+        }
+
+        incrementSpeed(player);
 
         if (player.isMovingHorizontally())
         {
             player.moveHorizontally(this);
-            if (!playerVball.isMovingVertically())
-                playerVball.reinitialise();
+            if (!player.getVolleyball().isMovingVertically())
+                player.getVolleyball().reinitialise();
         }
 
-        if (playerVball.isMovingVertically())
+        if (player.getVolleyball().isMovingVertically())
         {
-            playerVball.draw(canvas);
-            playerVball.moveVertically(this);
-            playerVball.spinBall();
+            player.getVolleyball().draw(canvas);
+            player.getVolleyball().moveVertically(this);
+            player.getVolleyball().spinBall();
         }
     }
 }
