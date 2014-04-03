@@ -4,12 +4,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+import android.media.AudioManager;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,9 +19,10 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.k.blockout.graphics.GameResources;
+
 public class BlockActivity extends ActionBarActivity implements GameListener
 {
-    private static final String TAG = BlockActivity.class.getSimpleName();
     private AlertDialog alertDialog;
     PlaceholderFragment fragment;
 
@@ -32,7 +31,8 @@ public class BlockActivity extends ActionBarActivity implements GameListener
 
     private View dialogView;
     private MainGamePanel panel = null;
-    private Bitmap selectedAvatar;
+
+    private GameResources gameResources;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -53,9 +53,14 @@ public class BlockActivity extends ActionBarActivity implements GameListener
                     .commit();
         }
 
-        Log.d(TAG, "View added");
-
+        // Have the dialog view ready. This is used to display the loss and victory at the end of the game
         buildDialog(this);
+
+        // Initialise all the resources required by the game
+        gameResources = new GameResources(this, getResources());
+
+        // Set the volume buttons to handle the media volume instead of ringtone volume
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
 
     private void resetView()
@@ -107,19 +112,16 @@ public class BlockActivity extends ActionBarActivity implements GameListener
         ImageButton avatar1 = (ImageButton) findViewById(R.id.image_1_avatar);
         ImageButton avatar2 = (ImageButton) findViewById(R.id.image_2_avatar);
 
-        final Bitmap avatar1Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.avatar1);
-        final Bitmap avatar2Bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.avatar2);
-
-        avatar1.setImageBitmap(avatar1Bitmap);
-        avatar2.setImageBitmap(avatar2Bitmap);
+        avatar1.setImageBitmap(gameResources.getAvatar1Bitmap());
+        avatar2.setImageBitmap(gameResources.getAvatar2Bitmap());
 
         avatar1.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View view)
             {
-                selectedAvatar = avatar1Bitmap;
-                startGameAvatar(selectedAvatar);
+                gameResources.setPlayerAvatar(gameResources.getAvatar1Bitmap());
+                startGameAvatar();
             }
         });
 
@@ -128,8 +130,8 @@ public class BlockActivity extends ActionBarActivity implements GameListener
             @Override
             public void onClick(View view)
             {
-                selectedAvatar = avatar2Bitmap;
-                startGameAvatar(selectedAvatar);
+                gameResources.setPlayerAvatar(gameResources.getAvatar2Bitmap());
+                startGameAvatar();
             }
         });
     }
@@ -170,11 +172,10 @@ public class BlockActivity extends ActionBarActivity implements GameListener
                 saveScore(score, false);
                 alertDialog.setTitle("Loser");
 
-                final Bitmap sixPack = BitmapFactory.decodeResource(getResources(), R.drawable.six_pack);
                 TextView text = (TextView) dialogView.findViewById(R.id.dialog_text);
                 text.setText("You Lost!\nScore: " + score);
                 ImageView img = (ImageView) dialogView.findViewById(R.id.dialog_image);
-                img.setImageBitmap(sixPack);
+                img.setImageBitmap(gameResources.getSixPack());
 
                 alertDialog.show();
             }
@@ -191,7 +192,7 @@ public class BlockActivity extends ActionBarActivity implements GameListener
             {
                 if (newLevel <= MaxLevel)
                 {
-                    panel = new MainGamePanel(BlockActivity.this, selectedAvatar, score, newLevel);
+                    panel = new MainGamePanel(BlockActivity.this, score, newLevel, gameResources);
                     setContentView(panel);
                 }
                 else
@@ -199,11 +200,10 @@ public class BlockActivity extends ActionBarActivity implements GameListener
                     saveScore(score, false);
                     alertDialog.setTitle("Winner");
 
-                    final Bitmap medal = BitmapFactory.decodeResource(getResources(), R.drawable.medal);
                     TextView text = (TextView) dialogView.findViewById(R.id.dialog_text);
                     text.setText("You Win!\nScore: " + score);
                     ImageView img = (ImageView) dialogView.findViewById(R.id.dialog_image);
-                    img.setImageBitmap(medal);
+                    img.setImageBitmap(gameResources.getMedal());
 
                     alertDialog.show();
                 }
@@ -228,9 +228,9 @@ public class BlockActivity extends ActionBarActivity implements GameListener
         }
     }
 
-    public void startGameAvatar(Bitmap bmp)
+    public void startGameAvatar()
     {
-        panel = new MainGamePanel(this, bmp, 0, 1);
+        panel = new MainGamePanel(this, 0, 1, gameResources);
         setContentView(panel);
     }
 
@@ -242,7 +242,6 @@ public class BlockActivity extends ActionBarActivity implements GameListener
     @Override
     protected void onDestroy()
     {
-        Log.d(TAG, "Destroying...");
         super.onDestroy();
     }
 

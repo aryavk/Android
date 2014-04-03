@@ -1,13 +1,10 @@
 package com.k.blockout;
 
 import android.graphics.Canvas;
-import android.util.Log;
 import android.view.SurfaceHolder;
 
 public class MainThread extends Thread
 {
-    private static final String TAG = MainThread.class.getSimpleName();
-
     // flag to hold game state
     private boolean running;
     public void setRunning(boolean running)
@@ -19,7 +16,6 @@ public class MainThread extends Thread
     public void run()
     {
         Canvas canvas;
-        Log.d(TAG, "Starting game loop");
         while (running)
         {
             canvas = null;

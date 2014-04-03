@@ -12,8 +12,6 @@ public class Opponent extends Person implements GraphicInterface
 
     private boolean visible;
 
-    private Volleyball volleyball;
-
     public Opponent(Bitmap bitmap, int x, int y, int speed)
     {
         this.Width = bitmap.getWidth();
@@ -58,16 +56,6 @@ public class Opponent extends Person implements GraphicInterface
     public void setMovingVertically(boolean movingVertically)
     {
         this.movingVertically = movingVertically;
-    }
-
-    public Volleyball getVolleyball()
-    {
-        return volleyball;
-    }
-
-    public void setVolleyball(Volleyball volleyball)
-    {
-        this.volleyball = volleyball;
     }
 
     @Override
