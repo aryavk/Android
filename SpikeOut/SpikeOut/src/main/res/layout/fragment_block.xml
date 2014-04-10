@@ -53,6 +53,7 @@
         android:layout_centerHorizontal="true"
         android:gravity="center"
         android:layout_below="@+id/clear_score_button"
+        android:textStyle="bold"
         android:text="@string/select_avatar_text"
         android:textSize="@dimen/score_text_size"
         android:id="@+id/select_avatar"/>

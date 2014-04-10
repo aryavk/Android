@@ -20,6 +20,7 @@ import com.k.blockout.graphics.Person;
 import com.k.blockout.graphics.Player;
 import com.k.blockout.graphics.Volleyball;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -61,7 +62,7 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
     private String levelText = "";
     private String timeText = "";
 
-    // TODO maybe i dont need this, added in for the balls able to keep going, but it shouldnt occur anymore, was wrong code
+    // TODO maybe i dont need this, added in for the balls able to keep going, but it shouldn't occur anymore, was wrong code
     private final Object mutex = new Object();
 
     public MainGamePanel(Context context, int score, int level, GameResources resources)
@@ -170,26 +171,27 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         levelText = "Level " + level;
 
         // This is the countdown timer at the start of each level
-        new CountDownTimer(3000,1000)
+        new CountDownTimer(3100,100)
         {
             @Override
             public void onTick(long timeLeft)
             {
-                if (timeLeft > 999)
-                {
-                    timeText = "Time Left: " + String.valueOf(timeLeft / 1000);
-                }
+                double time = (double) timeLeft / (double) 1000;
+
+                BigDecimal timeValue = new BigDecimal(String.valueOf(time));
+                timeValue = timeValue.setScale(1, BigDecimal.ROUND_HALF_EVEN);
+
+                if (time > 0.2)
+                    timeText = "Time Left: " + timeValue.toString() + " sec";
                 else
-                {
                     timeText = "START";
-                }
+
                 invalidate();
             }
 
             @Override
             public void onFinish()
             {
-                timeText = "START";
                 gameStarted = true;
             }
         }.start();
@@ -333,63 +335,58 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         for (int i = 0; i < pointerCount; i++)
         {
             int pointer = MotionEventCompat.getPointerId(event, i);
-            float pressure = event.getPressure(i);
             float eventX = event.getX(i);
             float eventY = event.getY(i);
 
-            // Pressure must be ok, not just a very slight hover touch.
-            if (pressure > 0.5)
+            if (action == MotionEvent.ACTION_DOWN)
             {
-                if (action == MotionEvent.ACTION_DOWN)
+                handleActions(eventX, eventY, pointer);
+            }
+            else if (action == MotionEvent.ACTION_UP)
+            {
+                if (pointer == movePointer)
                 {
-                    handleActions(eventX, eventY, pointer);
+                    movePointer = NoPointer;
+                    player.setMovingHorizontally(false);
                 }
-                else if (action == MotionEvent.ACTION_UP)
+                else if (pointer == shootPointer)
                 {
-                    if (pointer == movePointer)
-                    {
-                        movePointer = NoPointer;
-                        player.setMovingHorizontally(false);
-                    }
-                    else if (pointer == shootPointer)
-                    {
-                        shootPointer = NoPointer;
-                    }
+                    shootPointer = NoPointer;
                 }
-                else if (action == MotionEvent.ACTION_POINTER_UP)
+            }
+            else if (action == MotionEvent.ACTION_POINTER_UP)
+            {
+                if (pointer == movePointer)
                 {
-                    if (pointer == movePointer)
-                    {
-                        movePointer = NoPointer;
-                        player.setMovingHorizontally(false);
-                    }
-                    else if (pointer == shootPointer)
-                    {
-                        shootPointer = NoPointer;
-                    }
+                    movePointer = NoPointer;
+                    player.setMovingHorizontally(false);
                 }
-                else if(action == MotionEvent.ACTION_POINTER_DOWN)
+                else if (pointer == shootPointer)
                 {
-                    handleActions(eventX, eventY, pointer);
+                    shootPointer = NoPointer;
                 }
-                else if (action == MotionEvent.ACTION_MOVE)
+            }
+            else if(action == MotionEvent.ACTION_POINTER_DOWN)
+            {
+                handleActions(eventX, eventY, pointer);
+            }
+            else if (action == MotionEvent.ACTION_MOVE)
+            {
+                // In the move action, we need to define the pointer differently, as it always uses index 0
+                // when doing MotionEventCompat.getActionIndex(event);. This is a workaround
+                pointer = event.getPointerId(i);
+                handleActions(eventX, eventY, pointer);
+            }
+            else if (action == MotionEvent.ACTION_CANCEL)
+            {
+                if (pointer == movePointer)
                 {
-                    // In the move action, we need to define the pointer differently, as it always uses index 0
-                    // when doing MotionEventCompat.getActionIndex(event);. This is a workaround
-                    pointer = event.getPointerId(i);
-                    handleActions(eventX, eventY, pointer);
+                    movePointer = NoPointer;
+                    player.setMovingHorizontally(false);
                 }
-                else if (action == MotionEvent.ACTION_CANCEL)
+                else if (pointer == shootPointer)
                 {
-                    if (pointer == movePointer)
-                    {
-                        movePointer = NoPointer;
-                        player.setMovingHorizontally(false);
-                    }
-                    else if (pointer == shootPointer)
-                    {
-                        shootPointer = NoPointer;
-                    }
+                    shootPointer = NoPointer;
                 }
             }
         }
@@ -573,7 +570,6 @@ public class MainGamePanel extends SurfaceView implements SurfaceHolder.Callback
         player.draw(canvas);
 
         checkCollisions();
-
 
         i++;
 
