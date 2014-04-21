@@ -2,10 +2,8 @@ package com.k.blockout.graphics;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Matrix;
 import android.view.View;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Volleyball implements GraphicInterface, Collidable
@@ -32,7 +30,7 @@ public class Volleyball implements GraphicInterface, Collidable
 
     private int gameHeight;
 
-    public Volleyball(Bitmap bitmap, int x, int y, int speed, Direction direction, Person player)
+    public Volleyball(Bitmap bitmap, int x, int y, int speed, Direction direction, Person player, List<Bitmap> imageIteration)
     {
         this.bitmap = bitmap;
         this.x = x;
@@ -42,48 +40,13 @@ public class Volleyball implements GraphicInterface, Collidable
         this.Height = bitmap.getHeight();
         this.direction = direction;
         this.owningPlayer = player;
-
-        initialiseBitmaps();
+        this.imageIteration = imageIteration;
     }
 
     public void reinitialise()
     {
         setX(owningPlayer.getX());
         setY(owningPlayer.getY());
-    }
-
-    private void initialiseBitmaps()
-    {
-        if (imageIteration == null)
-        {
-            Bitmap bmp0 = bitmap;
-            Bitmap bmp45 = getRotatedBitmap(45);
-            Bitmap bmp90 = getRotatedBitmap(90);
-            Bitmap bmp135 = getRotatedBitmap(135);
-            Bitmap bmp180 = getRotatedBitmap(180);
-            Bitmap bmp225 = getRotatedBitmap(225);
-            Bitmap bmp270 = getRotatedBitmap(270);
-            Bitmap bmp315 = getRotatedBitmap(315);
-
-            imageIteration = new ArrayList<Bitmap>();
-            imageIteration.add(bmp0);
-            imageIteration.add(bmp45);
-            imageIteration.add(bmp90);
-            imageIteration.add(bmp135);
-            imageIteration.add(bmp180);
-            imageIteration.add(bmp225);
-            imageIteration.add(bmp270);
-            imageIteration.add(bmp315);
-        }
-    }
-
-    private Bitmap getRotatedBitmap(float rotate)
-    {
-        Matrix matrix = new Matrix();
-
-        matrix.postRotate(rotate);
-
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
     }
 
     public Bitmap getBitmap() {
@@ -128,6 +91,11 @@ public class Volleyball implements GraphicInterface, Collidable
     public int getSpeed()
     {
         return speed;
+    }
+
+    private int getRelativeSpeed()
+    {
+        return (getGameHeight() / 1000) * getSpeed();
     }
 
     public void setSpeed(int speed)
@@ -207,7 +175,7 @@ public class Volleyball implements GraphicInterface, Collidable
         if (direction.equals(Direction.UP))
         {
             if (isMovingVertically() && getY() > 0)
-                setY(getY() - getSpeed());
+                setY(getY() - getRelativeSpeed());
             else
             {
                 setY(getGameHeight() - getHeight() / 2);
@@ -217,7 +185,7 @@ public class Volleyball implements GraphicInterface, Collidable
         else
         {
             if (isMovingVertically() && getY() < getGameHeight())
-                setY(getY() + getSpeed());
+                setY(getY() + getRelativeSpeed());
             else
             {
                 setY(getHeight() / 2);
@@ -243,5 +211,12 @@ public class Volleyball implements GraphicInterface, Collidable
         }
 
         bitmap = imageIteration.get(arrayIndex);
+    }
+
+    public boolean isInPath(GraphicInterface graphic)
+    {
+        return (isMovingVertically() &&
+                ((getX() >= graphic.getX() && getX() <= (graphic.getX() + graphic.getWidth())) ||
+                (getX() <= graphic.getX() && (getX() + getWidth()) >= graphic.getX())));
     }
 }

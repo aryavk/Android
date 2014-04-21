@@ -14,6 +14,8 @@ public abstract class Person implements GraphicInterface
     private boolean movingHorizontally;
     private Volleyball volleyball;
 
+    private int gameWidth;
+
     public Bitmap getBitmap()
     {
         return bitmap;
@@ -22,6 +24,16 @@ public abstract class Person implements GraphicInterface
     public void setBitmap(Bitmap bitmap)
     {
         this.bitmap = bitmap;
+    }
+
+    public void setGameWidth(int width)
+    {
+        this.gameWidth = width;
+    }
+
+    public int getGameWidth()
+    {
+        return gameWidth;
     }
 
     public int getX()
@@ -64,6 +76,11 @@ public abstract class Person implements GraphicInterface
         return speed;
     }
 
+    private int getRelativeSpeed()
+    {
+        return (int) (((double) getGameWidth() / (double) 1080) * (double) getSpeed());
+    }
+
     public boolean isMovingHorizontally()
     {
         return movingHorizontally;
@@ -78,14 +95,14 @@ public abstract class Person implements GraphicInterface
     {
         if (getMoveToX() < getX())
         {
-            if (getX() - getMoveToX() < getSpeed())
+            if (getX() - getMoveToX() < getRelativeSpeed())
             {
                 setX((int) getMoveToX());
                 setMovingHorizontally(false);
             }
-            else if (getX() - speed > 60)
+            else if (getX() - getRelativeSpeed() > getWidth() / 2)
             {
-                setX(getX() - speed);
+                setX(getX() - getRelativeSpeed());
             }
             else
             {
@@ -95,18 +112,18 @@ public abstract class Person implements GraphicInterface
         }
         else
         {
-            if (getMoveToX() - getX() < speed)
+            if (getMoveToX() - getX() < getRelativeSpeed())
             {
                 setX((int) getMoveToX());
                 setMovingHorizontally(false);
             }
-            else if (getX() + speed < view.getWidth() - 60)
+            else if (getX() + getRelativeSpeed() < view.getWidth() - (getWidth() / 2))
             {
-                setX(getX() + speed);
+                setX(getX() + getRelativeSpeed());
             }
             else
             {
-                setX(view.getWidth() - 60);
+                setX(view.getWidth() - (getWidth() / 2));
                 setMovingHorizontally(false);
             }
         }

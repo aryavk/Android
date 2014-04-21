@@ -1,7 +1,9 @@
-package com.k.blockout.graphics;
+package com.k.blockout.util;
 
 import android.graphics.Color;
 import android.graphics.Rect;
+
+import com.k.blockout.graphics.GraphicInterface;
 
 public class CollisionDetector
 {

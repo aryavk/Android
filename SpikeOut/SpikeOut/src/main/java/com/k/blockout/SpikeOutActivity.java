@@ -21,7 +21,7 @@ import android.widget.TextView;
 
 import com.k.blockout.graphics.GameResources;
 
-public class BlockActivity extends ActionBarActivity implements GameListener
+public class SpikeOutActivity extends ActionBarActivity implements GameListener
 {
     private AlertDialog alertDialog;
     PlaceholderFragment fragment;
@@ -30,7 +30,7 @@ public class BlockActivity extends ActionBarActivity implements GameListener
     private final String HIGH_SCORE_KEY = "score";
 
     private View dialogView;
-    private MainGamePanel panel = null;
+    private SpikeOutGame panel = null;
 
     private GameResources gameResources;
 
@@ -95,7 +95,7 @@ public class BlockActivity extends ActionBarActivity implements GameListener
         // create alert dialog
         alertDialog = alertDialogBuilder.create();
 
-        dialogView = View.inflate(BlockActivity.this, R.layout.dialog_view, null);
+        dialogView = View.inflate(SpikeOutActivity.this, R.layout.dialog_view, null);
         alertDialog.setView(dialogView);
     }
 
@@ -192,10 +192,9 @@ public class BlockActivity extends ActionBarActivity implements GameListener
             {
                 if (newLevel <= MaxLevel)
                 {
-                    panel = new MainGamePanel(BlockActivity.this, score, newLevel, gameResources);
+                    panel = new SpikeOutGame(SpikeOutActivity.this, score, newLevel, gameResources);
                     setContentView(panel);
-                }
-                else
+                } else
                 {
                     saveScore(score, false);
                     alertDialog.setTitle("Winner");
@@ -211,12 +210,26 @@ public class BlockActivity extends ActionBarActivity implements GameListener
         });
     }
 
-    /*@Override
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        if (panel != null)
+        {
+            panel = new SpikeOutGame(this, panel.getGamePanelResources());
+            setContentView(panel);
+        }
+    }
+
+    @Override
     public void onBackPressed()
     {
         super.onBackPressed();
-        panel.getThread().setRunning(false);
-    }*/
+        if (panel != null)
+        {
+            panel.getGamePanelResources().getThread().setRunning(false);
+        }
+    }
 
     @Override
     protected void onPause()
@@ -224,13 +237,13 @@ public class BlockActivity extends ActionBarActivity implements GameListener
         super.onPause();
         if (panel != null)
         {
-            panel.getThread().setRunning(false);
+            panel.getGamePanelResources().getThread().setRunning(false);
         }
     }
 
     public void startGameAvatar()
     {
-        panel = new MainGamePanel(this, 0, 1, gameResources);
+        panel = new SpikeOutGame(this, 0, 1, gameResources);
         setContentView(panel);
     }
 
@@ -251,7 +264,7 @@ public class BlockActivity extends ActionBarActivity implements GameListener
         super.onStop();
         if (panel != null)
         {
-            panel.getThread().setRunning(false);
+            panel.getGamePanelResources().getThread().setRunning(false);
         }
     }
 
@@ -293,8 +306,8 @@ public class BlockActivity extends ActionBarActivity implements GameListener
         public void onActivityCreated(Bundle savedInstanceState)
         {
             super.onActivityCreated(savedInstanceState);
-            ((BlockActivity)getActivity()).showScore();
-            ((BlockActivity)getActivity()).showAvatars();
+            ((SpikeOutActivity)getActivity()).showScore();
+            ((SpikeOutActivity)getActivity()).showAvatars();
         }
     }
 
