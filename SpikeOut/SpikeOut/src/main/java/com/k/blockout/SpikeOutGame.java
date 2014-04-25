@@ -83,7 +83,7 @@ public class SpikeOutGame extends SurfaceView implements SurfaceHolder.Callback
         Volleyball opponentVball1 = new Volleyball(resources.getVolleyballBitmap(), 0, 0, opponentSpeed, Direction.DOWN, opponent1, resources.getVolleyballImageIteration());
         Volleyball opponentVball2 = new Volleyball(resources.getVolleyballBitmap(), 0, 0, opponentSpeed, Direction.DOWN, opponent2, resources.getVolleyballImageIteration());
         Volleyball opponentVball3 = new Volleyball(resources.getVolleyballBitmap(), 0, 0, opponentSpeed, Direction.DOWN, opponent3, resources.getVolleyballImageIteration());
-        Volleyball opponentVball4 = new Volleyball(resources.getVolleyballBitmap(), 0, 0, opponentSpeed, Direction.DOWN, opponent3, resources.getVolleyballImageIteration());
+        Volleyball opponentVball4 = new Volleyball(resources.getVolleyballBitmap(), 0, 0, opponentSpeed, Direction.DOWN, opponent4, resources.getVolleyballImageIteration());
 
         opponentVball1.setSpeed(opponentBallSpeed);
         opponentVball2.setSpeed(opponentBallSpeed);
