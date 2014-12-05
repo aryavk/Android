@@ -10,6 +10,8 @@ public class Player extends Person implements GraphicInterface
     private int Width;
     private int Height;
 
+    private boolean hasLibero;
+
     public Player(Bitmap bitmap, int x, int y, int speed)
     {
         this.Width = bitmap.getWidth();
@@ -58,5 +60,15 @@ public class Player extends Person implements GraphicInterface
     public void moveVertically(View view)
     {
         // do nothing, player shouldnt move vertically
+    }
+
+    public boolean isHasLibero()
+    {
+        return hasLibero;
+    }
+
+    public void setHasLibero(boolean hasLibero)
+    {
+        this.hasLibero = hasLibero;
     }
 }

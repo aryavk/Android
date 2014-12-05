@@ -1,6 +1,6 @@
 package com.k.blockout.util;
 
-import com.k.blockout.SpikeOutGame;
+import com.k.blockout.game.SpikeOutGame;
 
 public class ActionHandler
 {
@@ -11,7 +11,7 @@ public class ActionHandler
         this.gamePanel = panel;
     }
 
-    public void handleActions(float eventX, float eventY, int pointer)
+    public Button handleActions(float eventX, float eventY, int pointer)
     {
         if (gamePanel.getGamePanelResources().getLeftButton().eventInBounds(eventX, eventY))
         {
@@ -19,6 +19,8 @@ public class ActionHandler
             gamePanel.getGamePanelResources().getPlayer().setMovingHorizontally(true);
 
             gamePanel.getGamePanelResources().setMovePointer(pointer);
+
+            return Button.LEFT;
         }
         else if (gamePanel.getGamePanelResources().getRightButton().eventInBounds(eventX, eventY))
         {
@@ -26,6 +28,8 @@ public class ActionHandler
             gamePanel.getGamePanelResources().getPlayer().setMovingHorizontally(true);
 
             gamePanel.getGamePanelResources().setMovePointer(pointer);
+
+            return Button.RIGHT;
         }
         else if (gamePanel.getGamePanelResources().getShootButton().eventInBounds(eventX, eventY))
         {
@@ -35,11 +39,15 @@ public class ActionHandler
                 {
                     gamePanel.getGamePanelResources().getPlayer().getVolleyball().setX(gamePanel.getGamePanelResources().getPlayer().getX());
                     gamePanel.getGamePanelResources().getPlayer().getVolleyball().setMovingVertically(gamePanel.getGamePanelResources().isGameStarted());
+
                     if (gamePanel.getGamePanelResources().isGameStarted())
                         gamePanel.getGamePanelResources().getGameResources().getSoundPool().play(gamePanel.getGamePanelResources().getGameResources().getSounds()[1], 100, 100, 1, 0, 1);
+
                     gamePanel.getGamePanelResources().setShootPointer(pointer);
                 }
             }
+
+            return Button.SHOOT;
         }
         else
         {
@@ -52,6 +60,8 @@ public class ActionHandler
 
             if (pointer == gamePanel.getGamePanelResources().getShootPointer())
                 gamePanel.getGamePanelResources().setShootPointer(SpikeOutGame.NoPointer);
+
+            return Button.NONE;
         }
     }
 }
