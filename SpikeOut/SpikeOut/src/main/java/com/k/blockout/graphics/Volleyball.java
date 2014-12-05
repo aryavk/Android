@@ -6,7 +6,7 @@ import android.view.View;
 
 import java.util.List;
 
-public class Volleyball implements GraphicInterface, Collidable
+public class Volleyball implements GraphicInterface, Collidable, Spinnable
 {
     private Bitmap bitmap; // the actual bitmap
 
@@ -30,6 +30,9 @@ public class Volleyball implements GraphicInterface, Collidable
 
     private int gameHeight;
 
+    int numberOfCollisions = 0;
+    int maxCollissions = 1;
+
     public Volleyball(Bitmap bitmap, int x, int y, int speed, Direction direction, Person player, List<Bitmap> imageIteration)
     {
         this.bitmap = bitmap;
@@ -47,6 +50,7 @@ public class Volleyball implements GraphicInterface, Collidable
     {
         setX(owningPlayer.getX());
         setY(owningPlayer.getY());
+        numberOfCollisions = 0;
     }
 
     public Bitmap getBitmap() {
@@ -155,7 +159,19 @@ public class Volleyball implements GraphicInterface, Collidable
     @Override
     public void setCollided(boolean collided)
     {
-        this.collided = collided;
+        if (collided)
+        {
+            if ((numberOfCollisions + 1) < getMaxCollissions())
+            {
+                this.collided = false;
+                numberOfCollisions++;
+            }
+            else
+            {
+                this.collided = true;
+                numberOfCollisions = 0;
+            }
+        }
     }
 
     @Override
@@ -196,10 +212,10 @@ public class Volleyball implements GraphicInterface, Collidable
 
     public void moveHorizontally(View view)
     {
-        // do ntohing, ball shouldnt move horizontally
+        // do nothing, ball shouldn't move horizontally
     }
 
-    public void spinBall()
+    public void spinGraphic()
     {
         if (arrayIndex < imageIteration.size() - 1)
         {
@@ -218,5 +234,15 @@ public class Volleyball implements GraphicInterface, Collidable
         return (isMovingVertically() &&
                 ((getX() >= graphic.getX() && getX() <= (graphic.getX() + graphic.getWidth())) ||
                 (getX() <= graphic.getX() && (getX() + getWidth()) >= graphic.getX())));
+    }
+
+    public int getMaxCollissions()
+    {
+        return maxCollissions;
+    }
+
+    public void setMaxCollissions(int maxCollissions)
+    {
+        this.maxCollissions = maxCollissions;
     }
 }

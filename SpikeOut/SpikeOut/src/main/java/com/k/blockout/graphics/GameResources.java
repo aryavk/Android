@@ -16,7 +16,10 @@ import java.util.List;
 public class GameResources
 {
     private Bitmap volleyballBitmap;
-    private List<Bitmap> imageIteration;
+    private List<Bitmap> volleyballImageIteration;
+
+    private Bitmap powerUpBitmap;
+    private List<Bitmap> powerUpImageIteration;
 
     private Bitmap opponent1Bitmap;
     private Bitmap opponent2Bitmap;
@@ -34,13 +37,58 @@ public class GameResources
 
     private Bitmap playerAvatar;
 
+    private Bitmap playerLiberoBitmap;
+
     private SoundPool soundPool;
     private int[] sounds;
 
+    // TODO these 2 methods are temporary until images resized
+    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight)
+    {
+        // Raw height and width of image
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+
+            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
+            // height and width larger than the requested height and width.
+            while ((halfHeight / inSampleSize) > reqHeight
+                    && (halfWidth / inSampleSize) > reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+
+        return inSampleSize;
+    }
+
+    private Bitmap decodeSampledBitmapFromResource(Resources res, int resId, int reqWidth, int reqHeight) {
+
+        // First decode with inJustDecodeBounds=true to check dimensions
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeResource(res, resId, options);
+
+        // Calculate inSampleSize
+        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+
+        // Decode bitmap with inSampleSize set
+        options.inJustDecodeBounds = false;
+        return BitmapFactory.decodeResource(res, resId, options);
+    }
+
     public GameResources(Context context, Resources resources)
     {
+        // TODO fix these back up after images have been resized properly in resources folder
         volleyballBitmap = BitmapFactory.decodeResource(resources, R.drawable.ball);
         initialiseVolleyballBitmaps();
+        powerUpBitmap = BitmapFactory.decodeResource(resources, R.drawable.sportsdrink);
+        initialisePowerUpBitmaps();
+
         opponent1Bitmap = BitmapFactory.decodeResource(resources, R.drawable.opponent1);
         opponent2Bitmap = BitmapFactory.decodeResource(resources, R.drawable.opponent2);
         opponent3Bitmap = BitmapFactory.decodeResource(resources, R.drawable.opponent3);
@@ -49,13 +97,15 @@ public class GameResources
         avatar1Bitmap = BitmapFactory.decodeResource(resources, R.drawable.avatar1);
         avatar2Bitmap = BitmapFactory.decodeResource(resources, R.drawable.avatar2);
 
+        playerLiberoBitmap = BitmapFactory.decodeResource(resources, R.drawable.player_libero);
+
         leftButtonBitmap = BitmapFactory.decodeResource(resources, R.drawable.back2);
         rightButtonBitmap = BitmapFactory.decodeResource(resources, R.drawable.forward2);
         shootButtonBitmap = BitmapFactory.decodeResource(resources, R.drawable.spike2);
 
         courtBitmap = BitmapFactory.decodeResource(resources, R.drawable.court2);
 
-        sixPack = BitmapFactory.decodeResource(resources, R.drawable.six_pack);
+        sixPack = BitmapFactory.decodeResource(resources, R.drawable.sad_face);
         medal = BitmapFactory.decodeResource(resources, R.drawable.medal);
 
         soundPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
@@ -66,7 +116,7 @@ public class GameResources
 
     private void initialiseVolleyballBitmaps()
     {
-        if (imageIteration == null)
+        if (volleyballImageIteration == null)
         {
             Bitmap bmp0 = getVolleyballBitmap();
             Bitmap bmp45 = getRotatedBitmap(getVolleyballBitmap(), 45);
@@ -77,15 +127,40 @@ public class GameResources
             Bitmap bmp270 = getRotatedBitmap(getVolleyballBitmap(), 270);
             Bitmap bmp315 = getRotatedBitmap(getVolleyballBitmap(), 315);
 
-            imageIteration = new ArrayList<Bitmap>();
-            imageIteration.add(bmp0);
-            imageIteration.add(bmp45);
-            imageIteration.add(bmp90);
-            imageIteration.add(bmp135);
-            imageIteration.add(bmp180);
-            imageIteration.add(bmp225);
-            imageIteration.add(bmp270);
-            imageIteration.add(bmp315);
+            volleyballImageIteration = new ArrayList<Bitmap>();
+            volleyballImageIteration.add(bmp0);
+            volleyballImageIteration.add(bmp45);
+            volleyballImageIteration.add(bmp90);
+            volleyballImageIteration.add(bmp135);
+            volleyballImageIteration.add(bmp180);
+            volleyballImageIteration.add(bmp225);
+            volleyballImageIteration.add(bmp270);
+            volleyballImageIteration.add(bmp315);
+        }
+    }
+
+    private void initialisePowerUpBitmaps()
+    {
+        if (powerUpImageIteration == null)
+        {
+            Bitmap bmp0 = getPowerUpBitmap();
+            /*Bitmap bmp45 = getRotatedBitmap(getVolleyballBitmap(), 45);
+            Bitmap bmp90 = getRotatedBitmap(getVolleyballBitmap(), 90);
+            Bitmap bmp135 = getRotatedBitmap(getVolleyballBitmap(), 135);
+            Bitmap bmp180 = getRotatedBitmap(getVolleyballBitmap(), 180);
+            Bitmap bmp225 = getRotatedBitmap(getVolleyballBitmap(), 225);
+            Bitmap bmp270 = getRotatedBitmap(getVolleyballBitmap(), 270);
+            Bitmap bmp315 = getRotatedBitmap(getVolleyballBitmap(), 315);*/
+
+            powerUpImageIteration = new ArrayList<Bitmap>();
+            powerUpImageIteration.add(bmp0);
+            /*volleyballImageIteration.add(bmp45);
+            volleyballImageIteration.add(bmp90);
+            volleyballImageIteration.add(bmp135);
+            volleyballImageIteration.add(bmp180);
+            volleyballImageIteration.add(bmp225);
+            volleyballImageIteration.add(bmp270);
+            volleyballImageIteration.add(bmp315);*/
         }
     }
 
@@ -105,7 +180,17 @@ public class GameResources
 
     public List<Bitmap> getVolleyballImageIteration()
     {
-        return imageIteration;
+        return volleyballImageIteration;
+    }
+
+    public Bitmap getPowerUpBitmap()
+    {
+        return powerUpBitmap;
+    }
+
+    public List<Bitmap> getPowerUpImageIteration()
+    {
+        return powerUpImageIteration;
     }
 
     public Bitmap getOpponent1Bitmap()
@@ -171,6 +256,11 @@ public class GameResources
     public Bitmap getPlayerAvatar()
     {
         return playerAvatar;
+    }
+
+    public Bitmap getPlayerLiberoBitmap()
+    {
+        return playerLiberoBitmap;
     }
 
     public void setPlayerAvatar(Bitmap playerAvatar)

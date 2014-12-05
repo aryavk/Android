@@ -1,0 +1,72 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/instructions_bg"
+                android:id="@+id/tutorial_dialog_bar">
+
+    <TextView
+        android:layout_width="200dp"
+        android:layout_height="70dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="0dp"
+        android:gravity="center"
+        android:textSize="@dimen/tutorial_text_size"
+        android:textColor="@color/white"
+        android:textStyle="bold"
+        android:id="@+id/tutorial_dialog_title_text"/>
+
+    <TextView
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="0dp"
+        android:gravity="center|top"
+        android:textSize="@dimen/tutorial_text_size"
+        android:textColor="@color/white"
+        android:layout_below="@+id/tutorial_dialog_title_text"
+        android:id="@+id/tutorial_dialog_text"/>
+
+    <ImageView
+        android:contentDescription="@string/tutorial_image_text"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@+id/tutorial_dialog_text"
+        android:id="@+id/tutorial_dialog_image"/>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                    android:layout_width="200dp"
+                    android:layout_height="120dp"
+                    android:layout_below="@+id/tutorial_dialog_text"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="150dp"
+                    android:id="@+id/tutorial_dialog_button_bar">
+
+        <ImageButton
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:layout_alignLeft="@+id/tutorial_exit_button"
+            android:layout_alignStart="@+id/tutorial_exit_button"
+            android:id="@+id/tutorial_prev_button"
+            android:background="@drawable/prev_button"/>
+
+        <ImageButton
+            android:layout_width="100dp"
+            android:layout_height="50dp"
+            android:gravity="center"
+            android:layout_alignRight="@+id/tutorial_exit_button"
+            android:layout_alignEnd="@+id/tutorial_exit_button"
+            android:id="@+id/tutorial_next_button"
+            android:background="@drawable/next_button"/>
+
+        <ImageButton
+            android:layout_width="200dp"
+            android:layout_height="50dp"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/tutorial_prev_button"
+            android:id="@+id/tutorial_exit_button"
+            android:background="@drawable/exit_wide"/>
+    </RelativeLayout>
+</RelativeLayout>

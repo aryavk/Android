@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">SpikeOut</string>
+    <string name="app_id">865198333104</string>
+    <string name="app_name">DodJee</string>
     <string name="start_text">Start!</string>
-    <string name="game_title_text">SpikeOut</string>
-    <string name="clear_score_text">Clear Score</string>
+    <string name="game_title_text">DodJee</string>
+    <string name="tutorial_next_text">Next</string>
+    <string name="tutorial_prev_text">Prev</string>
+    <string name="tutorial_exit_text">Exit</string>
+    <string name="tutorial_image_text">Image</string>
+    <string name="tutorial_text">How To Play</string>
+    <string name="dialog_play_again_text">Play Again</string>
+    <string name="dialog_close_text">Close</string>
     <string name="select_avatar_text">Select Avatar</string>
     <string name="action_settings">Settings</string>
 
