@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/DodJee.iml" filepath="$PROJECT_DIR$/DodJee.iml" />
+      <module fileurl="file://$PROJECT_DIR$/DodJee/DodJee-DodJee.iml" filepath="$PROJECT_DIR$/DodJee/DodJee-DodJee.iml" />
+    </modules>
+  </component>
+</project>
+
